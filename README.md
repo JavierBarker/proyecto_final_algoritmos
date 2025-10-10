@@ -6,7 +6,7 @@
 Para compilar los archivos, utiliza el siguiente comando, cabe resaltar que deben ir todos los archivos `.cpp` para compilar:
 
 ```bash
-g++ main.cpp SistemaBiblioteca.cpp 
+g++ main.cpp SistemaBiblioteca.cpp Utilidades.cpp -o ./output/sistema
 ```
 
 ## Ejecucion del .exe
