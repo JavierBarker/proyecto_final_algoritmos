@@ -31,11 +31,10 @@ void SistemaBiblioteca::mostrarMenu() {
         switch (opcion)
         {
         case 1:
-            
-            /* code */
+            cout << "Opcion1" << endl;
             break;
         case 2:
-            /* code */
+        
             break;
         case 3:
             /* code */

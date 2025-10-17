@@ -3,4 +3,5 @@ class SistemaBiblioteca{
     public:
         // Muestra el menú principal del sistema
         void mostrarMenu();
+        
 };
