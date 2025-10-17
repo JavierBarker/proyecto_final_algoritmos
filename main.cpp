@@ -32,7 +32,7 @@ int main() {
             sistema.mostrarMenu();
         } else {
             cout << "\nUsuario o contraseña incorrectos.  🚨" << endl;
-            utilidades.limpiarPantalla();
+            utilidades.limpiarPantallaValidar();
         }
     } while (utilidades.autenticar(usuario, contrasena) != true);
     

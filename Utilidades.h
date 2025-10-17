@@ -9,4 +9,5 @@ private:
 public:
     bool autenticar(string& usuario, string& contrasena);
     void limpiarPantalla();
+    void limpiarPantallaValidar();
 };

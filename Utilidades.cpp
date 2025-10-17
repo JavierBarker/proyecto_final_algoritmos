@@ -15,9 +15,17 @@ bool Utilidades::autenticar(string& usuario, string& contrasena) {
     return (usuario == passAdmin && contrasena == passAdmin);
 }
 
-void Utilidades::limpiarPantalla() {
+void Utilidades::limpiarPantallaValidar() {
     cout << "Presione cualquier tecla para continuar..." << endl;
     _getch();
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+}
+
+void Utilidades::limpiarPantalla() {
     #ifdef _WIN32
         system("cls");
     #else
