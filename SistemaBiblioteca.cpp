@@ -31,7 +31,7 @@ void SistemaBiblioteca::mostrarMenu() {
         switch (opcion)
         {
         case 1:
-            cout << "Opcion1" << endl;
+            
             break;
         case 2:
         
