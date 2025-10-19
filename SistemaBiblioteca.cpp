@@ -32,10 +32,47 @@ void SistemaBiblioteca::mostrarMenu() {
         {
         case 1:
             
+            /* code */
             break;
         case 2:
-        
+        do{
+        int opcion2;
+            cout << "╠══════════════════════════════════════════════════════════════╣" << endl;
+            cout << "║ 1. Mostrar usuarios en sistema                               ║" << endl;
+            cout << "║ 2. Ingresar nuevo usuario                                    ║" << endl;
+            cout << "║ 3. Consultar prestamos de usuario:                           ║" << endl;
+            cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+ 
+           switch (opcion2) {
+           case 1:
+            mostrarInformacion() const;
+            cout << endl;
             break;
+
+            case 2:
+            guardarEnArchivo();
+            cout << endl;
+            cout << " usuario registrado correctamente :) " << endl;
+            cout << endl;
+            break;
+
+            case 3:
+            if (puedePrestar() < 4) {
+            cout << "Usuario puede prestar libro tiene: " << puedePrestar() << " prestamos" << endl;         
+            } else {
+            cout << "Usuario no tiene permitido mas prestamos " << endl;
+            cout << "presenta " << puedePrestar() << " libros prestados " << endl;
+            }
+            cout << endl;
+            break;
+
+           default: 
+           cout << "Opcion ingresada invalida" << endl;
+            break;
+           }
+           } while (opcion2 != 3);
+           break;
+           
         case 3:
             /* code */
             break;
