@@ -1,0 +1,105 @@
+cpp
+
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+struct Libro {
+    int id;
+    string titulo;
+    string autor;
+    bool disponible;
+};
+
+vector<Libro> biblioteca;
+int siguienteId = 1;
+
+void agregarLibro() {
+    Libro libro;
+    libro.id = siguienteId++;
+    cout << "Ingrese el título del libro: ";
+    getline(cin >> ws, libro.titulo);
+    cout << "Ingrese el autor del libro: ";
+    getline(cin >> ws, libro.autor);
+    libro.disponible = true;
+
+    biblioteca.push_back(libro);
+    cout << "Libro agregado con éxito.\n";
+}
+
+void mostrarLibros() {
+    cout << "\nLista de libros:\n";
+    for (const auto& libro : biblioteca) {
+        cout << "ID: " << libro.id
+             << " | Título: " << libro.titulo
+             << " | Autor: " << libro.autor
+             << " | Estado: " << (libro.disponible ? "Disponible" : "Prestado") << "\n";
+    }
+}
+
+void prestarLibro() {
+    int id;
+    cout << "Ingrese el ID del libro a prestar: ";
+    cin >> id;
+
+    for (auto& libro : biblioteca) {
+        if (libro.id == id) {
+            if (libro.disponible) {
+                libro.disponible = false;
+                cout << "Libro prestado con éxito.\n";
+            } else {
+                cout << "El libro ya está prestado.\n";
+            }
+            return;
+        }
+    }
+    cout << "Libro no encontrado.\n";
+}
+
+void devolverLibro() {
+    int id;
+    cout << "Ingrese el ID del libro a devolver: ";
+    cin >> id;
+
+    for (auto& libro : biblioteca) {
+        if (libro.id == id) {
+            if (!libro.disponible) {
+                libro.disponible = true;
+                cout << "Libro devuelto con éxito.\n";
+            } else {
+                cout << "El libro ya estaba disponible.\n";
+            }
+            return;
+        }
+    }
+    cout << "Libro no encontrado.\n";
+}
+void menu() {
+    int opcion;
+    do {
+        cout << "\n--- Biblioteca ---\n";
+        cout << "1. Agregar libro\n";
+        cout << "2. Mostrar libros\n";
+        cout << "3. Prestar libro\n";
+        cout << "4. Devolver libro\n";
+        cout << "0. Salir\n";
+        cout << "Seleccione una opción: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1: agregarLibro(); break;
+            case 2: mostrarLibros(); break;
+            case 3: prestarLibro(); break;
+            case 4: devolverLibro(); break;
+            case 0: cout << "Saliendo del programa.\n"; break;
+            default: cout << "Opción inválida.\n"; break;
+        }
+    } while (opcion != 0);
+}
+
+int main() {
+    menu();
+    return 0;
+}
