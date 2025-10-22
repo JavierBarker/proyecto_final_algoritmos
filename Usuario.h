@@ -3,28 +3,41 @@
 
 #include <string>
 
+using namespace std;
+
 class Usuario {
 private:
-    std::string id;
-    std::string nombre;
-    std::string carrera;
-    std::string correo;
-    std::string telefono;
+    string id;
+    string nombre;
+    string carrera;
+    string correo;
+    string telefono;
     int librosPrestados;
 
 public:
     // Constructor
-    Usuario(std::string id, std::string nombre, std::string carrera, std::string correo, std::string telefono);
+    Usuario(string id="", string nombre="", string carrera="", string correo="", string telefono="", int librosPrestados=0)
+        : id(id), nombre(nombre), carrera(carrera), correo(correo), telefono(telefono), librosPrestados(librosPrestados) {}
 
     // Métodos
     bool puedePrestar() const;
-    void mostrarInformacion() const;
 
     // Setters y getters
-    void getid(const std::string& nuevoId);
-    std::string getid() const;
+    // getters
+    string getId() { return id; }
+    string getNombre() { return nombre; }
+    string getCarrera() { return carrera; }
+    string getCorreo() { return correo; }
+    string getTelefono() { return telefono; }
+    int getLibrosPrestados() { return librosPrestados; }
 
-    void guardarEnArchivo() const;
+    // setters
+    void setNombre(string& n) { nombre = n; }
+    void setCarrera(string& c) { carrera = c; }
+    void setCorreo(string& co) { correo = co; }
+    void setTelefono(string& t) { telefono = t; }
+    void setLibrosPrestados(int l) { librosPrestados = l; }
+    
 };
 
 #endif
