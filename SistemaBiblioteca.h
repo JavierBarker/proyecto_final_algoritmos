@@ -29,7 +29,9 @@ public:
     void eliminarUsuario();
 
     // CRUD LIBROS
-    void guardarLibroEnArchivo();
+    void cargarLibros();
+    void guardarLibros();
+    bool agregarLibro();
     void buscarLibro();
     void listarLibros();
     void actualizarLibro();

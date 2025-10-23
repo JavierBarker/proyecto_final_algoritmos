@@ -1,0 +1,2 @@
+ISBN;Titulo;Autor;Año;Categoria;Cantidad 
+978-3-16-148410-0;Cien años de soledad;Gabriel García Márquez;1967;Ficción;5

@@ -1,6 +1,7 @@
 #include "SistemaBiblioteca.h"
 #include "Utilidades.h"
 #include "Usuario.h"
+#include "Libro.h"
 
 #include <iostream>
 #include <string>
@@ -14,13 +15,15 @@ using namespace std;
 //Variables Globales
 Utilidades utilidades;
 Usuario usuario;
+Libro libro;
 
 //vectores
 vector<Usuario> usuarios;
+vector<Libro> libros;
 
 
 string usuariosTxt = "usuarios.txt";
-string librosTxt = "/output/libros.txt";
+string librosTxt = "libros.txt";
 string prestamosTxt = "/output/prestamos.txt";
 
 void SistemaBiblioteca::mostrarMenu() {
@@ -48,8 +51,8 @@ void SistemaBiblioteca::mostrarMenu() {
         switch (opcion)
         {
         case 1:
-            
-            /* code */
+            utilidades.limpiarPantalla();
+            mostrarMenuGestionLibro();
             break;
         case 2:
             utilidades.limpiarPantalla();
@@ -376,6 +379,333 @@ void SistemaBiblioteca::mostrarMenuGestionUsuario()
 
         case 5:
             eliminarUsuario();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 6:
+            utilidades.limpiarPantalla();
+            cout << endl;
+            break;
+        default:
+            utilidades.limpiarPantalla();
+            cout << endl;
+            cout << "Opción inválida. Por favor, intente de nuevo. 🚨" << endl;
+            cout << endl;
+            break;
+        }
+    } while (opcion2 != 6);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//CRUD LIBROS
+void SistemaBiblioteca::cargarLibros(){
+    ifstream archivo(librosTxt);
+    string lineaTexto;
+
+    while (getline(archivo, lineaTexto)){
+
+        stringstream infoLineaTexto(lineaTexto);
+        string isbn, titulo, autor, anio, categoria, cantidadDisponible;
+
+        getline(infoLineaTexto, isbn, ';');
+        getline(infoLineaTexto, titulo, ';');
+        getline(infoLineaTexto, autor, ';');
+        getline(infoLineaTexto, anio, ';');
+        getline(infoLineaTexto, categoria, ';');
+        getline(infoLineaTexto, cantidadDisponible, ';');
+
+        if (isbn == "ISBN") continue;
+        libros.push_back(Libro(isbn, titulo, autor, stoi(anio), categoria, stoi(cantidadDisponible)));
+    }
+
+    archivo.close();
+}
+
+void SistemaBiblioteca::guardarLibros(){
+    ofstream archivo(librosTxt, ios::trunc);
+
+    if (!archivo.is_open())
+    {
+        cerr << "Error al abrir el archivo libros.txt" << endl;
+    }else{
+        archivo << "ISBN;Titulo;Autor;Año;Categoria;Cantidad" << endl;
+        for (size_t i = 0; i < libros.size(); i++)
+        {
+            archivo 
+                << libros[i].getISBN() << ";"
+                << libros[i].getTitulo() << ";"
+                << libros[i].getAutor() << ";"
+                << libros[i].getAnio() << ";"
+                << libros[i].getCategoria() << ";"
+                << libros[i].getCantidadDisponible() << endl;
+        }
+
+        archivo.close();
+    }
+}
+
+bool SistemaBiblioteca::agregarLibro(){
+    cargarLibros();
+
+    string isbn, titulo, autor, anio, categoria, cantidadDisponible;
+    
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║              === Registrar Libro ===                         ║" << endl;
+    cout << "╠══════════════════════════════════════════════════════════════╣" << endl;
+    cout << "║ ISBN: "; getline(cin, isbn);
+    cout << "║ Titulo: "; getline(cin, titulo); 
+    cout << "║ Autor: "; getline(cin, autor);
+    cout << "║ Año: "; getline(cin, anio);
+    cout << "║ Categoria: "; getline(cin, categoria);
+    cout << "║ Cantidad Disponible: "; getline(cin, cantidadDisponible);
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+
+    cout << endl;
+    cout << " Libro registrado correctamente ✅ " << endl;
+
+    libros.push_back(Libro(isbn, titulo, autor, stoi(anio), categoria, stoi(cantidadDisponible)));
+    guardarLibros();
+    
+    libros.clear();
+    return true;
+}
+
+void SistemaBiblioteca::buscarLibro(){
+    cargarLibros();
+    string buscar;
+    int encontrado;
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Buscar Libro por Titulo, Autor o ISBN ===                 ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    cout << "   Ingrese el Titulo, Autor o ISBN: ";
+    getline(cin, buscar);
+    cout << endl;
+
+    for (size_t i = 0; i < libros.size(); i++)
+    {
+        if (libros[i].getTitulo() == buscar || libros[i].getAutor() == buscar || libros[i].getISBN() == buscar)
+        {
+            cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+            cout << "  ISBN " << libros[i].getISBN() << endl;
+            cout << "  Titulo: " << libros[i].getTitulo() << endl;
+            cout << "  Autor: " << libros[i].getAutor() << endl;
+            cout << "  Año: " << libros[i].getAnio() << endl;
+            cout << "  Categoria: " << libros[i].getCategoria() << endl;
+            cout << "  Cantidad Disponible: " << libros[i].getCantidadDisponible() << endl;
+            cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+            cout << endl;
+            cout << "Libro Encontrado. ✅" << endl;
+            encontrado = 1;
+        } 
+    }
+
+    if (encontrado != 1) cout << "Libro no Encontrado. 🚨" << endl;
+    libros.clear();
+}
+
+void SistemaBiblioteca::listarLibros(){
+    cargarLibros();
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Lista de libros ===                                      ║" << endl;
+
+    for (size_t i = 0; i < libros.size(); i++)
+    {
+        cout << "╠══════════════════════════════════════════════════════════════╣" << endl;
+        cout << "  ISBN " << libros[i].getISBN() << endl;
+        cout << "  Titulo: " << libros[i].getTitulo() << endl;
+        cout << "  Autor: " << libros[i].getAutor() << endl;
+        cout << "  Año: " << libros[i].getAnio() << endl;
+        cout << "  Categoria: " << libros[i].getCategoria() << endl;
+        cout << "  Cantidad Disponible: " << libros[i].getCantidadDisponible() << endl;
+    }
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    cout << endl;
+    libros.clear();
+}
+
+void SistemaBiblioteca::actualizarLibro(){
+    cargarLibros();
+    string buscar;
+    int encontrado, posicion;
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Actualizar Libro ===                                     ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    cout << "   Ingrese el Titulo, Autor o ISBN: ";
+    getline(cin, buscar);
+    cout << endl;
+
+    for (size_t i = 0; i < libros.size(); i++)
+    {
+        if (libros[i].getTitulo() == buscar || libros[i].getAutor() == buscar || libros[i].getISBN() == buscar)
+        {
+            cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+            cout << "  ISBN " << libros[i].getISBN() << endl;
+            cout << "  Titulo: " << libros[i].getTitulo() << endl;
+            cout << "  Autor: " << libros[i].getAutor() << endl;
+            cout << "  Año: " << libros[i].getAnio() << endl;
+            cout << "  Categoria: " << libros[i].getCategoria() << endl;
+            cout << "  Cantidad Disponible: " << libros[i].getCantidadDisponible() << endl;
+            cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+            cout << endl;
+            cout << "Libro Encontrado. ✅" << endl;
+            encontrado = 1;
+            posicion = i;
+        } 
+    }
+
+    if (encontrado == 1){
+        //actualizar Libro
+        string isbn, titulo, autor, anio, categoria, cantidadDisponible;
+        
+        cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+        cout << "║  === Ingrese los Nuevos Valores ===                          ║" << endl;
+        cout << "╠══════════════════════════════════════════════════════════════╣" << endl;
+        cout << "║ ISBN: "; getline(cin, isbn);
+        cout << "║ Titulo: "; getline(cin, titulo); 
+        cout << "║ Autor: "; getline(cin, autor);
+        cout << "║ Año: "; getline(cin, anio);
+        cout << "║ Categoria: "; getline(cin, categoria);
+        cout << "║ Cantidad Disponible: "; getline(cin, cantidadDisponible);
+        cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+        //actualizamos los datos
+        libros[posicion].setISBN(isbn);
+        libros[posicion].setTitulo(titulo);
+        libros[posicion].setAutor(autor);
+        libros[posicion].setAnio(stoi(anio));
+        libros[posicion].setCategoria(categoria);
+        libros[posicion].setCantidadDisponible(stoi(cantidadDisponible));
+        guardarLibros();
+
+        cout << "Libro Actualizado. ✅" << endl;
+    }else{
+        cout << "Libro no Encontrado. 🚨" << endl;
+    }
+
+    libros.clear();
+}
+
+void SistemaBiblioteca::eliminarLibro(){
+    cargarLibros();
+    string buscar;
+    int encontrado, posicion;
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Eliminar Libro ===                                       ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    cout << "   Ingrese el Titulo, Autor o ISBN: ";
+    getline(cin, buscar);
+    cout << endl;
+
+    for (size_t i = 0; i < libros.size(); i++)
+    {
+        if (libros[i].getTitulo() == buscar || libros[i].getAutor() == buscar || libros[i].getISBN() == buscar)
+        {
+            cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+            cout << "  ISBN " << libros[i].getISBN() << endl;
+            cout << "  Titulo: " << libros[i].getTitulo() << endl;
+            cout << "  Autor: " << libros[i].getAutor() << endl;
+            cout << "  Año: " << libros[i].getAnio() << endl;
+            cout << "  Categoria: " << libros[i].getCategoria() << endl;
+            cout << "  Cantidad Disponible: " << libros[i].getCantidadDisponible() << endl;
+            cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+            cout << endl;
+            cout << "Libro Encontrado. ✅" << endl;
+            encontrado = 1;
+            posicion = i;
+        } 
+    }
+
+    string respuesta;
+    if (encontrado == 1){
+        cout << "Desea Eliminar el Libro? 🚧 (S/N): ";
+        getline(cin, respuesta);
+
+        if (respuesta == "S" || respuesta == "s")
+        {
+            libros.erase(libros.begin() + posicion);
+        }
+        guardarLibros();
+        cout << "Libro Eliminado. ✅" << endl;
+    }else{
+        cout << "Libro no Encontrado. 🚨" << endl;
+    }
+
+    libros.clear();
+}
+
+void SistemaBiblioteca::mostrarMenuGestionLibro()
+{
+    int opcion2;
+    do
+    {
+        cout << endl;
+        cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+        cout << "║              === GESTIÓN DE LIBROS ===                       ║" << endl;
+        cout << "╠══════════════════════════════════════════════════════════════╣" << endl;
+        cout << "║ 1. Registrar Libro                                           ║" << endl;
+        cout << "║ 2. Buscar Libro                                              ║" << endl;
+        cout << "║ 3. Listar Libros                                             ║" << endl;
+        cout << "║ 4. Actualizar Libro                                          ║" << endl;
+        cout << "║ 5. Eliminar Libro                                            ║" << endl;
+        cout << "║ 6. Regresar                                                  ║" << endl;
+        cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+        cout << endl;
+        cout << "Seleccione una opción: ";
+        cin >> opcion2;
+        cin.ignore(); // Limpiar el buffer de entrada
+        cout << endl;
+
+        switch (opcion2)
+        {
+        case 1:
+        {
+            agregarLibro();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+        }
+        break;
+
+        case 2:
+            buscarLibro();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 3:
+            listarLibros();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 4:
+            actualizarLibro();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 5:
+            eliminarLibro();
             utilidades.limpiarPantallaValidar();
             cout << endl;
             break;

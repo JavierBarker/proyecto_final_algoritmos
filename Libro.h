@@ -15,36 +15,28 @@ private:
 
 public:
     // Constructor por defecto
-    Libro();
-
-    // Constructor con parámetros
-    Libro(string isbn, string titulo, string autor, int anio, string categoria, int cantidad);
+    Libro(string isbn = "", string titulo = "", string autor = "", int anio = 0, string categoria = "", int cantidadDisponible = 0)
+        : isbn(isbn), titulo(titulo), autor(autor), anio(anio), categoria(categoria), cantidadDisponible(cantidadDisponible) {}
 
     // Getters
-    string getISBN() const;
-    string getTitulo() const;
-    string getAutor() const;
-    int getAnio() const;
-    string getCategoria() const;
-    int getCantidadDisponible() const;
+    string getISBN() { return isbn; }
+    string getTitulo() { return titulo; }
+    string getAutor() { return autor; }
+    int getAnio() { return anio; }
+    string getCategoria() { return categoria; }
+    int getCantidadDisponible() { return cantidadDisponible; }
 
     // Setters
-    void setISBN(const string& isbn);
-    void setTitulo(const string& titulo);
-    void setAutor(const string& autor);
-    void setAnio(int anio);
-    void setCategoria(const string& categoria);
-    void setCantidadDisponible(int cantidad);
+    void setISBN(string& i) { isbn = i; }
+    void setTitulo(string& t) { titulo = t; }
+    void setAutor(string& a) { autor = a; }
+    void setAnio(int an) { anio = an; }
+    void setCategoria(string& c) { categoria = c; }
+    void setCantidadDisponible(int cant) { cantidadDisponible = cant; }
 
     // Métodos funcionales
     bool estaDisponible() const;
     void mostrarInformacion() const;
-
-    // Métodos de archivo (para CRUD)
-    static void registrarLibro();
-    static void listarLibros();
-    static void buscarLibro();
-    static void eliminarLibro();
 };
 
 #endif
