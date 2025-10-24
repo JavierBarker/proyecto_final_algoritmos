@@ -11,6 +11,7 @@
 #include <vector>
 #include <cmath>
 #include <iomanip>
+#include <map>
 
 
 using namespace std;
@@ -69,11 +70,14 @@ void SistemaBiblioteca::mostrarMenu() {
             mostrarMenuGestionPrestamo();
             break;
         case 4:
-            /* code */
+            utilidades.limpiarPantalla();
+            mostrarMenuGestionReportes();
             break;
         
         case 5:
             utilidades.limpiarPantalla();
+            cout << endl;
+            generarReporteGeneralTxt();
             cout << endl;
             cout << "Saliendo del programa... 🫡" << endl;
             cout << endl;
@@ -734,6 +738,13 @@ void SistemaBiblioteca::mostrarMenuGestionLibro()
 
 
 
+
+
+
+
+
+
+
 //PRESTAMOS
 void SistemaBiblioteca::cargarPrestamos(){
     ifstream archivo(prestamosTxt);
@@ -1111,7 +1122,6 @@ void SistemaBiblioteca::calcularMultasRetraso() {
     libros.clear();
 }
 
-
 void SistemaBiblioteca::mostrarMenuGestionPrestamo()
 {
     int opcion3;
@@ -1186,4 +1196,326 @@ void SistemaBiblioteca::mostrarMenuGestionPrestamo()
             break;
         }
     } while (opcion3 != 6);
+}
+
+
+
+
+
+
+
+
+
+void SistemaBiblioteca::reporteLibrosMasPrestados() {
+    cargarLibros();
+    cargarPrestamos();
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Reporte: Libros Más Prestados ===                        ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+    if (prestamos.empty()) {
+        cout << "No existen préstamos registrados aún. 🚨" << endl;
+        return;
+    }
+
+    // Contadores por ISBN
+    map<string, int> conteoPrestamos;
+    for (auto& p : prestamos) {
+        conteoPrestamos[p.getISBN()]++;
+    }
+
+    // Mostrar resultados
+    for (auto& libro : libros) {
+        int cantidad = conteoPrestamos[libro.getISBN()];
+        cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+        cout << "  Título: " << libro.getTitulo() << endl;
+        cout << "  Autor: " << libro.getAutor() << endl;
+        cout << "  ISBN: " << libro.getISBN() << endl;
+        cout << "  Veces Prestado: " << cantidad << endl;
+        cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    }
+
+    prestamos.clear();
+    libros.clear();
+}
+
+void SistemaBiblioteca::reporteUsuariosConMasPrestamos() {
+    cargarUsuarios();
+    cargarPrestamos();
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Reporte: Usuarios con Más Préstamos ===                  ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+    if (prestamos.empty()) {
+        cout << "No existen préstamos registrados. 🚨" << endl;
+        return;
+    }
+
+    map<string, int> conteoUsuarios;
+    for (auto& p : prestamos) {
+        conteoUsuarios[p.getIdUsuario()]++;
+    }
+
+    for (auto& usuario : usuarios) {
+        int cantidad = conteoUsuarios[usuario.getId()];
+        cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+        cout << "  ID Usuario: " << usuario.getId() << endl;
+        cout << "  Nombre: " << usuario.getNombre() << endl;
+        cout << "  Carrera: " << usuario.getCarrera() << endl;
+        cout << "  Total de Préstamos: " << cantidad << endl;
+        cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    }
+
+    prestamos.clear();
+    usuarios.clear();
+}
+
+void SistemaBiblioteca::reporteLibrosBajaDisponibilidad() {
+    cargarLibros();
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Reporte: Libros con Baja Disponibilidad ===              ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+    bool encontrado = false;
+
+    for (auto& libro : libros) {
+        if (libro.getCantidadDisponible() <= 2) {
+            encontrado = true;
+            cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+            cout << "  Título: " << libro.getTitulo() << endl;
+            cout << "  Autor: " << libro.getAutor() << endl;
+            cout << "  ISBN: " << libro.getISBN() << endl;
+            cout << "  Categoría: " << libro.getCategoria() << endl;
+            cout << "  Disponibles: " << libro.getCantidadDisponible() << endl;
+            cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+        }
+    }
+
+    if (!encontrado) {
+        cout << "✅ No hay libros con baja disponibilidad." << endl;
+    }
+
+    libros.clear();
+}
+
+void SistemaBiblioteca::reporteMultasPendientes() {
+    cargarPrestamos();
+    cargarUsuarios();
+    cargarLibros();
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Reporte: Multas Pendientes ===                           ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+    bool encontrado = false;
+
+    for (auto& prestamo : prestamos) {
+        if (prestamo.getMulta() > 0 && prestamo.getActivo() == 1) {
+            encontrado = true;
+
+            // Buscar usuario
+            string nombreUsuario = "Desconocido";
+            for (auto& usuario : usuarios) {
+                if (usuario.getId() == prestamo.getIdUsuario()) {
+                    nombreUsuario = usuario.getNombre();
+                    break;
+                }
+            }
+
+            // Buscar libro
+            string tituloLibro = "Desconocido";
+            for (auto& libro : libros) {
+                if (libro.getISBN() == prestamo.getISBN()) {
+                    tituloLibro = libro.getTitulo();
+                    break;
+                }
+            }
+
+            cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+            cout << "  ID Préstamo: " << prestamo.getIdPrestamo() << endl;
+            cout << "  Usuario: " << nombreUsuario << " (ID: " << prestamo.getIdUsuario() << ")" << endl;
+            cout << "  Libro: " << tituloLibro << " (ISBN: " << prestamo.getISBN() << ")" << endl;
+            cout << "  Multa pendiente: Q" << fixed << setprecision(2) << prestamo.getMulta() << endl;
+            cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+            cout << endl;
+        }
+    }
+
+    if (!encontrado) {
+        cout << "✅ No hay multas pendientes." << endl;
+    }
+
+    prestamos.clear();
+    usuarios.clear();
+    libros.clear();
+}
+
+// REPORTES Y ESTADÍSTICAS
+void SistemaBiblioteca::mostrarMenuGestionReportes()
+{
+    int opcion4;
+    do
+    {
+        cout << endl;
+        cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+        cout << "║              === REPORTES Y ESTADÍSTICAS ===                 ║" << endl;
+        cout << "╠══════════════════════════════════════════════════════════════╣" << endl;
+        cout << "║ 1. Libros más Prestados                                      ║" << endl;
+        cout << "║ 2. Usuarios con más Préstamos                                ║" << endl;
+        cout << "║ 3. Libros con baja Disponibilidad                            ║" << endl;
+        cout << "║ 4. Reporte de multas pendientes                              ║" << endl;
+        cout << "║ 5. Regresar                                                  ║" << endl;
+        cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+        cout << endl;
+        cout << "Seleccione una opción: ";
+        cin >> opcion4;
+        cin.ignore(); // Limpiar el buffer de entrada
+        cout << endl;
+
+        switch (opcion4)
+        {
+        case 1:
+        {
+            utilidades.limpiarPantalla();
+            reporteLibrosMasPrestados();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+        }
+        break;
+
+        case 2:
+            utilidades.limpiarPantalla();
+            reporteUsuariosConMasPrestamos();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 3:
+            utilidades.limpiarPantalla();
+            reporteLibrosBajaDisponibilidad();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 4:
+            utilidades.limpiarPantalla();
+            reporteMultasPendientes();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 5:
+            utilidades.limpiarPantalla();
+            cout << endl;
+            break;
+        default:
+            utilidades.limpiarPantalla();
+            cout << endl;
+            cout << "Opción inválida. Por favor, intente de nuevo. 🚨" << endl;
+            cout << endl;
+            break;
+        }
+    } while (opcion4 != 5);
+}
+
+
+
+// REPORTE GENERAL TXT
+
+void SistemaBiblioteca::generarReporteGeneralTxt() {
+    cargarLibros();
+    cargarUsuarios();
+    cargarPrestamos();
+
+    ofstream archivo("reporte_general_biblioteca.txt", ios::trunc);
+    if (!archivo.is_open()) {
+        cerr << "No se pudo crear el archivo de reportes. 🚨" << endl;
+        return;
+    }
+
+    archivo << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    archivo << "║    REPORTE GENERAL DEL SISTEMA DE BIBLIOTECA                 ║" << endl;
+    archivo << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    archivo << endl;
+
+    // ================== LIBROS MÁS PRESTADOS ==================
+    archivo << "=== Libros más prestados ===" << endl;
+    map<string, int> conteoLibros;
+    for (auto& p : prestamos) conteoLibros[p.getISBN()]++;
+// ╣
+    archivo << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    for (auto& libro : libros) {
+        
+        archivo << "  Título: " << libro.getTitulo() << endl;
+        archivo << "  Prestamos: " << conteoLibros[libro.getISBN()] << endl;
+        archivo << "╠══════════════════════════════════════════════════════════════╣" << endl;
+    }
+    archivo << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    archivo << endl;
+
+    // ================== USUARIOS CON MÁS PRÉSTAMOS ==================
+    archivo << "=== Usuarios con más préstamos ===" << endl;
+    map<string, int> conteoUsuarios;
+    for (auto& p : prestamos) conteoUsuarios[p.getIdUsuario()]++;
+
+    
+    archivo << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    for (auto& usuario : usuarios) {
+        archivo << "  Usuario: " << usuario.getNombre() << " (ID: " << usuario.getId() << ")" << endl;
+        archivo << "  Préstamos: " << conteoUsuarios[usuario.getId()] << endl;
+        archivo << "╠══════════════════════════════════════════════════════════════╣" << endl;
+    }
+    archivo << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    archivo << endl;
+
+    // ================== LIBROS BAJA DISPONIBILIDAD ==================
+    archivo << "=== Libros con baja disponibilidad (≤ 2) === " << endl;
+    
+    archivo << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    for (auto& libro : libros) {
+        if (libro.getCantidadDisponible() <= 2) {
+            archivo << "  Título: " << libro.getTitulo() << endl;
+            archivo << "  Disponibles: " << libro.getCantidadDisponible() << endl;
+            archivo << "╠══════════════════════════════════════════════════════════════╣" << endl;
+        }
+    }
+    archivo << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    archivo << endl;
+
+    // ================== MULTAS PENDIENTES ==================
+    archivo << "=== Multas Pendientes ===" << endl;
+    archivo << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    for (auto& prestamo : prestamos) {
+        if (prestamo.getMulta() > 0) {
+            string nombreUsuario = "Desconocido";
+            string tituloLibro = "Desconocido";
+
+            for (auto& u : usuarios) if (u.getId() == prestamo.getIdUsuario()) nombreUsuario = u.getNombre();
+            for (auto& l : libros) if (l.getISBN() == prestamo.getISBN()) tituloLibro = l.getTitulo();
+
+            archivo << "  Usuario: " << nombreUsuario << endl;
+            archivo << "  Libro: " << tituloLibro << endl;
+            archivo << "  Multa: Q" << fixed << setprecision(2) << prestamo.getMulta() << endl;
+            
+            archivo << "╠══════════════════════════════════════════════════════════════╣" << endl;
+        }
+    }
+    archivo << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    archivo << endl;
+
+    archivo.close();
+
+    prestamos.clear();
+    usuarios.clear();
+    libros.clear();
+
+    cout << "✅ Reporte general generado correctamente en: reportes_biblioteca.txt" << endl;
 }

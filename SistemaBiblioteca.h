@@ -18,6 +18,7 @@ public:
     void mostrarMenuGestionUsuario();
     void mostrarMenuGestionLibro();
     void mostrarMenuGestionPrestamo();
+    void mostrarMenuGestionReportes();
 
     // CRUD USUARIOS
     void cargarUsuarios();
@@ -45,4 +46,15 @@ public:
     void consultarHistorialPorUsuario();
     void listarPrestamosActivos();
     void calcularMultasRetraso();
+
+    // REPORTES Y ESTADÍSTICAS
+    void reporteLibrosMasPrestados();
+    void reporteUsuariosConMasPrestamos();
+    void reporteLibrosBajaDisponibilidad();
+    void mostrarMenuReportes();
+    void reporteMultasPendientes();
+
+
+    // REPORTE GENERAL
+    void generarReporteGeneralTxt();
 };
