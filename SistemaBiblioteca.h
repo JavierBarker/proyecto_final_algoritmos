@@ -38,4 +38,11 @@ public:
     void eliminarLibro();
 
     // PRESTAMOS
+    void cargarPrestamos();
+    void guardarPrestamos();
+    bool realizarPrestamo();
+    bool registrarDevolucion();
+    void consultarHistorialPorUsuario();
+    void listarPrestamosActivos();
+    void calcularMultasRetraso();
 };

@@ -10,4 +10,7 @@ public:
     bool autenticar(string& usuario, string& contrasena);
     void limpiarPantalla();
     void limpiarPantallaValidar();
+
+    string obtenerFechaActual();
+    double calcularMulta();
 };

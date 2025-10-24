@@ -1,5 +1,5 @@
 ID;Nombre;Carrera;Correo;Telefono;LibrosPrestados
-1;Javier Barker;Ingenieria;jbarker@gmail.com;42373001;2
+1;Javier Barker;Ingenieria;jbarker@gmail.com;42373001;4
 2;lola;inge;correo@email.com;2343143;3
 3;Maria Hernandez;medicina;mhernandez@email.com;23451234;3
-4;juan carlos;medicina;jcarlos@gmail.com;23442342;0
+4;juan carlos;medicina;jcarlos@gmail.com;23442342;-2

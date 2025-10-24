@@ -2,12 +2,15 @@
 #include "Utilidades.h"
 #include "Usuario.h"
 #include "Libro.h"
+#include "Prestamo.h"
 
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <cmath>
+#include <iomanip>
 
 
 using namespace std;
@@ -16,15 +19,17 @@ using namespace std;
 Utilidades utilidades;
 Usuario usuario;
 Libro libro;
+Prestamo prestamo;
 
 //vectores
 vector<Usuario> usuarios;
 vector<Libro> libros;
+vector<Prestamo> prestamos;
 
 
 string usuariosTxt = "usuarios.txt";
 string librosTxt = "libros.txt";
-string prestamosTxt = "/output/prestamos.txt";
+string prestamosTxt = "prestamos.txt";
 
 void SistemaBiblioteca::mostrarMenu() {
     utilidades.limpiarPantalla();
@@ -60,7 +65,8 @@ void SistemaBiblioteca::mostrarMenu() {
            break;
            
         case 3:
-            /* code */
+            utilidades.limpiarPantalla();
+            mostrarMenuGestionPrestamo();
             break;
         case 4:
             /* code */
@@ -724,3 +730,460 @@ void SistemaBiblioteca::mostrarMenuGestionLibro()
     } while (opcion2 != 6);
 }
 
+
+
+
+
+//PRESTAMOS
+void SistemaBiblioteca::cargarPrestamos(){
+    ifstream archivo(prestamosTxt);
+    string lineaTexto;
+
+    while (getline(archivo, lineaTexto)) {
+        stringstream infoLineaTexto(lineaTexto);
+        string idPrestamo, idUsuario, isbn, fechaPrestamo, fechaDevolucion, activo, multa;
+
+        getline(infoLineaTexto, idPrestamo, ';');
+        getline(infoLineaTexto, idUsuario, ';');
+        getline(infoLineaTexto, isbn, ';');
+        getline(infoLineaTexto, fechaPrestamo, ';');
+        getline(infoLineaTexto, fechaDevolucion, ';');
+        getline(infoLineaTexto, activo, ';');
+        getline(infoLineaTexto, multa, ';');
+
+        if (idPrestamo == "IdPrestamo") continue;
+
+        bool activoBool = (activo == "1");
+        double multaDouble = round(stod(multa) * 100.0) / 100.0;
+
+        prestamos.push_back(Prestamo(idPrestamo, idUsuario, isbn, fechaPrestamo, fechaDevolucion, activoBool, multaDouble));
+    }
+
+    archivo.close();
+}
+
+void SistemaBiblioteca::guardarPrestamos(){
+    ofstream archivo(prestamosTxt, ios::trunc);
+
+    if (!archivo.is_open()) {
+        cerr << "Error al abrir el archivo prestamos.txt" << endl;
+    } else {
+        archivo << "IdPrestamo;IdUsuario;ISBN;FechaPrestamo;FechaDevolucion;Activo;Multa" << endl;
+        for (size_t i = 0; i < prestamos.size(); i++) {
+            archivo 
+                << prestamos[i].getIdPrestamo() << ";"
+                << prestamos[i].getIdUsuario() << ";"
+                << prestamos[i].getISBN() << ";"
+                << prestamos[i].getFechaPrestamo() << ";"
+                << prestamos[i].getFechaDevolucion() << ";"
+                << prestamos[i].getActivo() << ";"
+                << prestamos[i].getMulta() << endl;
+        }
+
+        archivo.close();
+    }
+}
+
+bool SistemaBiblioteca::realizarPrestamo() {
+    cargarUsuarios();
+    cargarLibros();
+    cargarPrestamos();
+    
+    string idUsuario, isbn;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║              === Registrar Prestamo ===                      ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    cout << " Ingrese ID de usuario: ";
+    getline(cin, idUsuario);
+    cout << " Ingrese ISBN del libro: ";
+    getline(cin, isbn);
+
+    // Buscar usuario
+    int posUsuario = -1;
+    for (int i = 0; i < usuarios.size(); i++) {
+        if (usuarios[i].getId() == idUsuario) { posUsuario = i; break; }
+    }
+    if (posUsuario == -1) {
+        cout << "Usuario no encontrado 🚨" << endl;
+        return false;
+    }
+    if (!usuarios[posUsuario].puedePrestar()) {
+        cout << "El usuario ya tiene 3 libros prestados 🚨" << endl;
+        return false;
+    }
+
+    // Buscar libro
+    int posLibro = -1;
+    for (int i = 0; i < libros.size(); i++) {
+        if (libros[i].getISBN() == isbn) { posLibro = i; break; }
+    }
+    if (posLibro == -1) {
+        cout << "Libro no encontrado 🚨" << endl;
+        return false;
+    }
+    if (libros[posLibro].getCantidadDisponible() <= 0) {
+        cout << "Libro no disponible 🚨" << endl;
+        return false;
+    }
+
+    // Crear préstamo
+    string idPrestamo = to_string(prestamos.size() + 1);
+    string fechaHoy = utilidades.obtenerFechaActual();
+    prestamos.push_back(Prestamo(idPrestamo, idUsuario, isbn, fechaHoy, "", true, 0.0));
+
+    // Actualizar libro y usuario
+    libros[posLibro].setCantidadDisponible(libros[posLibro].getCantidadDisponible() - 1);
+    usuarios[posUsuario].setLibrosPrestados(usuarios[posUsuario].getLibrosPrestados() + 1);
+
+    guardarPrestamos();
+    guardarLibros();
+    guardarUsuarios();
+
+    cout << " Préstamo realizado ✅" << endl;
+
+    prestamos.clear();
+    libros.clear();
+    usuarios.clear();
+
+    return true;
+}
+
+bool SistemaBiblioteca::registrarDevolucion() {
+    cargarUsuarios();
+    cargarLibros();
+    cargarPrestamos();
+
+    string idPrestamo;
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Registrar Devolución de Préstamo ===                     ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    cout << " Ingrese el ID del préstamo: ";
+    getline(cin, idPrestamo);
+    cout << endl;
+
+    int posPrestamo = -1;
+    for (int i = 0; i < prestamos.size(); i++) {
+        if (prestamos[i].getIdPrestamo() == idPrestamo && prestamos[i].getActivo()) {
+            posPrestamo = i;
+            break;
+        }
+    }
+
+    if (posPrestamo == -1) {
+        cout << "Préstamo no encontrado o ya fue devuelto 🚨" << endl;
+        prestamos.clear();
+        usuarios.clear();
+        libros.clear();
+        return false;
+    }
+
+    // Obtener fecha de devolución
+    string fechaHoy = utilidades.obtenerFechaActual();
+    prestamos[posPrestamo].setFechaDevolucion(fechaHoy);
+
+    // Calcular multa
+    prestamos[posPrestamo].calcularMulta(prestamos[posPrestamo].getFechaPrestamo(), fechaHoy);
+    // prestamos[posPrestamo].setMulta(multaCalculada);
+
+    // Marcar como devuelto
+    prestamos[posPrestamo].setActivo(false);
+
+    // Actualizar usuario
+    for (int i = 0; i < usuarios.size(); i++) {
+        if (usuarios[i].getId() == prestamos[posPrestamo].getIdUsuario()) {
+            usuarios[i].setLibrosPrestados(usuarios[i].getLibrosPrestados() - 1);
+            break;
+        }
+    }
+
+    // Actualizar disponibilidad del libro
+    for (int i = 0; i < libros.size(); i++) {
+        if (libros[i].getISBN() == prestamos[posPrestamo].getISBN()) {
+            libros[i].setCantidadDisponible(libros[i].getCantidadDisponible() + 1);
+            break;
+        }
+    }
+
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ ✅ Devolución registrada exitosamente                         ║" << endl;
+    cout << "║ Multa generada: Q" << fixed << setprecision(2) << prestamos[posPrestamo].getMulta() 
+         << "                                      ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+    // Guardar cambios
+    guardarPrestamos();
+    guardarLibros();
+    guardarUsuarios();
+
+    prestamos.clear();
+    libros.clear();
+    usuarios.clear();
+
+    return true;
+}
+
+void SistemaBiblioteca::consultarHistorialPorUsuario() {
+    cargarUsuarios();
+    cargarLibros();
+    cargarPrestamos();
+
+    string idUsuario;
+    bool encontrado = false;
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Consultar Historial de Préstamos por Usuario ===         ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+    cout << " Ingrese el ID del usuario: ";
+    getline(cin, idUsuario);
+    cout << endl;
+
+    // Validar que el usuario exista
+    int posUsuario = -1;
+    for (int i = 0; i < usuarios.size(); i++) {
+        if (usuarios[i].getId() == idUsuario) {
+            posUsuario = i;
+            break;
+        }
+    }
+
+    if (posUsuario == -1) {
+        cout << "Usuario no encontrado 🚨" << endl;
+        prestamos.clear();
+        libros.clear();
+        usuarios.clear();
+        return;
+    }
+
+    cout << "Historial del usuario: " << usuarios[posUsuario].getNombre() << endl;
+    cout << "--------------------------------------------------------------" << endl;
+
+    // Recorrer préstamos y mostrar los que corresponden al usuario
+    for (int i = 0; i < prestamos.size(); i++) {
+        if (prestamos[i].getIdUsuario() == idUsuario) {
+            encontrado = true;
+
+            cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+            cout << "  ID Préstamo: " << prestamos[i].getIdPrestamo() << endl;
+            cout << "  ISBN: " << prestamos[i].getISBN() << endl;
+            cout << "  Fecha Préstamo: " << prestamos[i].getFechaPrestamo() << endl;
+            cout << "  Fecha Devolución: " 
+                 << (prestamos[i].getFechaDevolucion().empty() ? "No devuelto" : prestamos[i].getFechaDevolucion()) 
+                 << endl;
+            cout << "  Estado: " << (prestamos[i].getActivo() ? "Activo" : "Devuelto") << endl;
+            cout << "  Multa: Q" << fixed << setprecision(2) << prestamos[i].getMulta() << endl;
+            cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+            cout << endl;
+        }
+    }
+
+    if (!encontrado) {
+        cout << "📭 Este usuario no tiene historial." << endl;
+    }
+
+    prestamos.clear();
+    libros.clear();
+    usuarios.clear();
+}
+
+void SistemaBiblioteca::listarPrestamosActivos() {
+    cargarPrestamos();
+    cargarUsuarios();
+    cargarLibros();
+
+    bool encontrado = false;
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Listado de Préstamos Activos ===                         ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+    for (int i = 0; i < prestamos.size(); i++) {
+        if (prestamos[i].getActivo()) {
+            encontrado = true;
+
+            // Buscar el nombre del usuario
+            string nombreUsuario = "Desconocido";
+            for (int j = 0; j < usuarios.size(); j++) {
+                if (usuarios[j].getId() == prestamos[i].getIdUsuario()) {
+                    nombreUsuario = usuarios[j].getNombre();
+                    break;
+                }
+            }
+
+            // Buscar el título del libro
+            string tituloLibro = "Desconocido";
+            for (int k = 0; k < libros.size(); k++) {
+                if (libros[k].getISBN() == prestamos[i].getISBN()) {
+                    tituloLibro = libros[k].getTitulo();
+                    break;
+                }
+            }
+
+            cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+            cout << "  ID Préstamo: " << prestamos[i].getIdPrestamo() << endl;
+            cout << "  Usuario (ID): " << prestamos[i].getIdUsuario() << endl;
+            cout << "  Nombre Usuario: " << nombreUsuario << endl;
+            cout << "  ISBN: " << prestamos[i].getISBN() << endl;
+            cout << "  Libro: " << tituloLibro << endl;
+            cout << "  Fecha de Préstamo: " << prestamos[i].getFechaPrestamo() << endl;
+            cout << "  Multa a Pagar: " << prestamos[i].getMulta() << endl;
+            cout << "  Estado: ACTIVO" << endl;
+            cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+            cout << endl;
+        }
+    }
+
+    if (!encontrado) {
+        cout << "📭 No hay préstamos activos actualmente." << endl;
+    }
+
+    prestamos.clear();
+    usuarios.clear();
+    libros.clear();
+}
+
+void SistemaBiblioteca::calcularMultasRetraso() {
+    cargarPrestamos();
+    cargarUsuarios();
+    cargarLibros();
+
+    bool hayRetrasados = false;
+    string fechaHoy = utilidades.obtenerFechaActual();
+
+    cout << endl;
+    cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║ === Cálculo de Multas por Préstamos Retrasados ===           ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+    for (int i = 0; i < prestamos.size(); i++) {
+        if (prestamos[i].getActivo()) {
+            string fechaPrestamo = prestamos[i].getFechaPrestamo();
+            int diasPrestamo = prestamos[i].calcularDiasRetraso(fechaPrestamo, fechaHoy);
+
+            if (diasPrestamo > 7) {
+                double multa = (diasPrestamo - 7) * 5.0; // Q5 por día extra
+                prestamos[i].setMulta(multa);
+
+                hayRetrasados = true;
+
+                // Buscar usuario
+                string nombreUsuario = "Desconocido";
+                for (int j = 0; j < usuarios.size(); j++) {
+                    if (usuarios[j].getId() == prestamos[i].getIdUsuario()) {
+                        nombreUsuario = usuarios[j].getNombre();
+                        break;
+                    }
+                }
+
+                // Buscar libro
+                string tituloLibro = "Desconocido";
+                for (int k = 0; k < libros.size(); k++) {
+                    if (libros[k].getISBN() == prestamos[i].getISBN()) {
+                        tituloLibro = libros[k].getTitulo();
+                        break;
+                    }
+                }
+
+                cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+                cout << "  ID Préstamo: " << prestamos[i].getIdPrestamo() << endl;
+                cout << "  Usuario: " << nombreUsuario << " (ID: " << prestamos[i].getIdUsuario() << ")" << endl;
+                cout << "  Libro: " << tituloLibro << " (ISBN: " << prestamos[i].getISBN() << ")" << endl;
+                cout << "  Fecha Préstamo: " << prestamos[i].getFechaPrestamo() << endl;
+                cout << "  Días Prestado: " << diasPrestamo << endl;
+                cout << "  Multa aplicada: Q" << fixed << setprecision(2) << multa << endl;
+                cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+                cout << endl;
+            }
+        }
+    }
+
+    if (!hayRetrasados) {
+        cout << "✅ No hay préstamos con retraso mayor a 7 días." << endl;
+    } else {
+        guardarPrestamos();
+        cout << "✅ Multas calculadas y actualizadas correctamente." << endl;
+    }
+
+    prestamos.clear();
+    usuarios.clear();
+    libros.clear();
+}
+
+
+void SistemaBiblioteca::mostrarMenuGestionPrestamo()
+{
+    int opcion3;
+    do
+    {
+        cout << endl;
+        cout << "╔══════════════════════════════════════════════════════════════╗" << endl;
+        cout << "║              === GESTIÓN DE PRESTAMOS ===                    ║" << endl;
+        cout << "╠══════════════════════════════════════════════════════════════╣" << endl;
+        cout << "║ 1. Realizar Prestamo                                         ║" << endl;
+        cout << "║ 2. Registrar Devoluciones                                    ║" << endl;
+        cout << "║ 3. Historial por Usuario                                     ║" << endl;
+        cout << "║ 4. Listar Prestamos Activos                                  ║" << endl;
+        cout << "║ 5. Calcular Multas                                           ║" << endl;
+        cout << "║ 6. Regresar                                                  ║" << endl;
+        cout << "╚══════════════════════════════════════════════════════════════╝" << endl;
+
+        cout << endl;
+        cout << "Seleccione una opción: ";
+        cin >> opcion3;
+        cin.ignore(); // Limpiar el buffer de entrada
+        cout << endl;
+
+        switch (opcion3)
+        {
+        case 1:
+        {
+            utilidades.limpiarPantalla();
+            realizarPrestamo();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+        }
+        break;
+
+        case 2:
+            utilidades.limpiarPantalla();
+            registrarDevolucion();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 3:
+            utilidades.limpiarPantalla();
+            consultarHistorialPorUsuario();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 4:
+            utilidades.limpiarPantalla();
+            listarPrestamosActivos();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 5:
+            utilidades.limpiarPantalla();
+            calcularMultasRetraso();
+            utilidades.limpiarPantallaValidar();
+            cout << endl;
+            break;
+
+        case 6:
+            utilidades.limpiarPantalla();
+            cout << endl;
+            break;
+        default:
+            utilidades.limpiarPantalla();
+            cout << endl;
+            cout << "Opción inválida. Por favor, intente de nuevo. 🚨" << endl;
+            cout << endl;
+            break;
+        }
+    } while (opcion3 != 6);
+}
